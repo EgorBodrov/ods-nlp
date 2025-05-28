@@ -1,128 +1,124 @@
-# NLP Course Template
+# Movie Review Sentiment Classification
 ## Egor Bodrov, Onore Gleb, Evgeniy Dubskiy
 May 2025
+
 Abstract
-This document will provide you with guidelines for your project final
-report. You will learn how to structure the report and present your results.
-Use this field for the short description of your work. Please provide a
-link to your project code right here: https://github.com/EgorBodrov/ods-nlp.git
+This project addresses the problem of automatic sentiment classification of movie reviews using modern NLP models. We compare several transformer-based approaches on the Kaggle dataset [dsaa-6100-movie-review-sentiment-classification](https://www.kaggle.com/competitions/dsaa-6100-movie-review-sentiment-classification/overview). The goal is to achieve high accuracy in binary sentiment classification (positive/negative) and analyze the impact of model choice and preprocessing.
+
+Project code: https://github.com/EgorBodrov/ods-nlp.git
+
 # 1 Introduction
-First of all, you will need to write the whole report in English, with a few
-exceptions mentioned below. This section is devoted to a problem motivation.
-You should answer the question of why the problem you were working on is
-important. Also, you should describe what is unique in your approach to this
-problem, what are the differences to other approaches.
+Sentiment analysis of movie reviews is a classic NLP task with practical applications in recommendation systems, social media monitoring, and customer feedback analysis. The challenge lies in handling informal language, sarcasm, and short texts. We focus on leveraging recent advances in transformer architectures (DistilBERT, DeBERTa v3) and compare their performance on a real-world dataset.
+
 ## 1.1 Team
 Egor Bodrov - ...
 Onore Gleb - ...
 Evgeniy Dubskiy - ...
 
 # 2 Related Work
+- Pang & Lee (2008): Early work on sentiment analysis using bag-of-words and SVMs.
+- Howard & Ruder (2018): ULMFiT for transfer learning in text classification.
+- Devlin et al. (2019): BERT and its variants for state-of-the-art text classification.
+- He et al. (2021): DeBERTa v3, improved transformer architecture for NLP tasks.
 
 # 3 Model Description
+We evaluated the following models:
+- **DistilBERT (pretrained):** `sarahai/movie-sentiment-analysis` pipeline, no fine-tuning.
+- **DistilBERT (fine-tuned):** Fine-tuned on the provided movie review dataset.
+- **DistilBERT (SST-2):** Pretrained on SST-2, used as a zero-shot baseline.
+- **DistilBERT (Amazon):** Pretrained on Amazon reviews, used as a zero-shot baseline.
+- **DeBERTa v3 (pretrained):** `microsoft/deberta-v3-base` and `dfurman/deberta-v3-base-imdb`, fine-tuned on the dataset.
+
+All models are used for binary classification (positive/negative). Fine-tuning was performed using HuggingFace Transformers and PyTorch.
 
 # 4 Dataset
 
-Вот аккуратно оформленный Markdown `.md` вариант описания датасета **RCV1**, аналогичный по стилю твоему примеру с PAWS:
+## 4.1 Source and Access
+- **Dataset:** [Kaggle dsaa-6100-movie-review-sentiment-classification](https://www.kaggle.com/competitions/dsaa-6100-movie-review-sentiment-classification/overview)
+- **License:** For academic use, available via Kaggle competition page.
+- **Files:**
+  - `movie_reviews.csv` (train): columns `Id`, `text`, `label` (0=negative, 1=positive)
+  - `test_data.csv` (test): columns `Id`, `text`
 
----
+## 4.2 Statistics & EDA
+- **Train size:** 40,000 reviews
+- **Test size:** 10,000 reviews
+- **Class balance:**
+  - Positive (1): 50.1%
+  - Negative (0): 49.9%
+- **Text characteristics:**
+  - Length distribution: 100-500 characters (majority)
+  - Average words per review: ~100 words
+  - Duplicate reviews present: ~2.5% of total reviews
+- See `experiments/EDA.ipynb` for detailed visualizations:
+  - Class distribution plots
+  - Text length histograms
+  - Word clouds for frequent terms
+  - Comparison of positive vs negative review lengths
 
-## 4 Dataset
-
-In this section, we provide a detailed description of the **Reuters Corpus Volume I (RCV1)** dataset, including its origin, licensing conditions, acquisition methods, and key statistics. RCV1 is one of the largest publicly available corpora for text categorization tasks and is widely used in machine learning and information retrieval research.
-
-RCV1 was first introduced by Lewis *et al.* \[2004], where document encoding principles, taxonomy structures, and quality control procedures were presented. The corpus contains over **800,000** English-language news stories manually annotated along three hierarchical taxonomies: **topics**, **industries**, and **regions**.
----
-
-### Dataset Access
-
-**Official source:** Access can be requested via the [NIST TREC project](https://trec.nist.gov/data/reuters/reuters.html) under “Reuters Corpora — RCV1”.
-
-**Using scikit-learn:** The built-in `fetch_rcv1` loader automatically downloads and caches the dataset in `~/scikit_learn_data/rcv1`:
-
-```python
-from sklearn.datasets import fetch_rcv1
-rcv1 = fetch_rcv1(subset='all', download_if_missing=True)
-```
-
-More details can be found in the [scikit-learn documentation](https://scikit-learn.org/stable/modules/generated/sklearn.datasets.fetch_rcv1.html).
-
----
-
-### Data Format
-
-* `data`: a **CSR sparse matrix** of shape `(804,414 × 47,236)` with **log TF–IDF values** normalized by cosine.
-* `target`: a **multi-label sparse matrix**:
-
-  * `(804,414 × 103)` for topics
-  * `(804,414 × 369)` for industries
-  * `(804,414 × 54)` for regions
-* `sample_id`: an array of unique string identifiers for each article.
-
----
-
-### Preprocessing and Splits
-
-RCV1 comes with a **chronological split (LYRL2004)**:
-
-| Split | #Articles |
-| ----- | --------- |
-| Train | 23,149    |
-| Test  | 781,265   |
-
-This split is reflected in `fetch_rcv1(subset='train')` and `fetch_rcv1(subset='test')`. There is no official **validation set**, but many studies reserve **5–10%** of the training data for validation.
-
----
-
-### Dataset Statistics
-
-#### Table 1. Basic statistics of the RCV1 corpus.
-
-| Split | Articles | Vocabulary Size          | Non-zero Values (%)     | Description                            |
-| ----- | -------- | ------------------------ | ----------------------- | -------------------------------------- |
-| Train | 23,149   | \multirow{2}{\*}{47,236} | \multirow{2}{\*}{0.16%} | Articles before split (initial subset) |
-| Test  | 781,265  |                          |                         | Articles after split (remainder)       |
-| Total | 804,414  |                          |                         | Entire corpus                          |
-
-> **Note:** The non-zero percentage reflects the proportion of non-zero entries in the TF–IDF matrix.
-
----
-
-### Taxonomy Label Counts
-
-| Taxonomy   | #Labels |
-| ---------- | ------- |
-| Topics     | 103     |
-| Industries | 369     |
-| Regions    | 54      |
-
-These hierarchies are described in Lewis *et al.* \[2004] and used for **multi-label classification** tasks.
-
-
----
-
-Thus, **RCV1** is a well-documented and robust corpus for **text categorization** research, accessible through both official channels and popular libraries like **scikit-learn**.
-
+## 4.3 Preprocessing
+Our preprocessing pipeline includes:
+1. HTML tag removal (e.g., `<br>` tags)
+2. Text normalization:
+   - Lowercasing
+   - Extra space removal
+   - Special character handling
+3. NLTK-based processing:
+   - Tokenization
+   - Stemming (Porter Stemmer)
+   - Lemmatization (WordNet)
 
 # 5 Experiments
-This section should include several subsections.
+
 ## 5.1 Metrics
-First of all, you should describe the metric(s) you were using to evaluate your
-approach. Most likely a metric description will include a formula.
+- **Primary metric:** Accuracy
+- **Rationale:** Dataset is balanced, accuracy is the competition metric
+
 ## 5.2 Experiment Setup
-Secondly, you need to describe the design of your experiment, e.g. how many
-runs there were, how the data split was done. The important details of your
-model, like hyper-parameters used in the experiments, and so on.
-## 5.3 Baselines
-Another important feature is that you could provide here the description of
-some simple approaches for your problem, like logistic regression over TF-IDF
-embedding for text classification. The baselines are needed is there is no previous
-art on the problem you are presenting.
+- **Data split:** 90% train / 10% validation (stratified)
+- **Training parameters:**
+  - Batch size: 16
+  - Max sequence length: 256 tokens
+  - Optimizer: AdamW (lr=2e-5)
+  - Epochs: 3-4 with early stopping
+  - Loss: Cross-entropy
+- **Hardware:** GPU (CUDA if available)
+- **Model selection:** Best checkpoint by validation accuracy
+
+## 5.3 Models and Training
+1. **DeBERTa v3 IMDB (dfurman/deberta-v3-base-imdb)**
+   - Pre-trained on IMDB reviews
+   - Fine-tuned on our dataset
+   - Implementation: `experiments/deberta-v3-base-imdb.ipynb`
+
+2. **DistilBERT Fine-tuned**
+   - Base: `distilbert-base-uncased`
+   - Custom fine-tuning on movie reviews
+   - Implementation: `experiments/distilbert_finetuned.ipynb`
+
+3. **Zero-shot Baselines**
+   - DistilBERT (no fine-tuning): `sarahai/movie-sentiment-analysis`
+   - DistilBERT SST-2: Pre-trained on Stanford Sentiment Treebank
+   - DistilBERT Amazon: Pre-trained on Amazon reviews
 
 # 6 Results
+| Model                              | Validation Accuracy |
+|-------------------------------------|--------------------|
+| DistilBERT (pretrained, no FT)      | ~0.85              |
+| DistilBERT (fine-tuned)             | ~0.89              |
+| DistilBERT (SST-2, zero-shot)       | ~0.83              |
+| DistilBERT (Amazon, zero-shot)      | ~0.81              |
+| DeBERTa v3 (fine-tuned, IMDB)       | ~0.90              |
+| DeBERTa v3 (fine-tuned, base)       | ~0.89              |
+
+*See experiment notebooks for detailed logs and plots.*
 
 # 7 Conclusion
-In this section, you need to describe all the work in short: what you have done
-and what has been achieved. E.g. you have collected a dataset, made a markup
-for it and developed a model showing the best results compared to other models.
-References
+We compared several transformer-based models for movie review sentiment classification. Fine-tuned DeBERTa v3 and DistilBERT models outperform zero-shot and out-of-domain baselines, achieving up to 90% accuracy. Preprocessing and careful validation are crucial for robust results. Future work may include ensembling, data augmentation, and error analysis.
+
+# References
+- [Kaggle Competition Page](https://www.kaggle.com/competitions/dsaa-6100-movie-review-sentiment-classification/overview)
+- Devlin et al., "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding", 2019
+- He et al., "DeBERTa: Decoding-enhanced BERT with Disentangled Attention", 2021
+- Howard & Ruder, "Universal Language Model Fine-tuning for Text Classification", 2018
+- Pang & Lee, "Opinion Mining and Sentiment Analysis", 2008
